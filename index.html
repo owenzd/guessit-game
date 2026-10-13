@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#fafaf7">
+<title>Guess It! Slang Game</title>
+<style>
+  :root {
+    --bg: #fafaf7;
+    --ink: #1d1d1f;
+    --muted: #8a8a8e;
+    --line: #e4e4e0;
+    --card: #ffffff;
+    --accent: #1d1d1f;
+    --good: #1f9d55;
+    --good-bg: #e8f6ee;
+    --bad: #d93a3a;
+    --bad-bg: #fdecec;
+    --good-ink: #145c34;
+    --bad-ink: #8f2020;
+    --btn-ink: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141416; --ink: #f2f2f0; --muted: #9a9a9e; --line: #2e2e32; --card: #1d1d20;
+      --accent: #f2f2f0; --btn-ink: #141416;
+      --good: #3ccf7e; --good-bg: #13301f; --good-ink: #a8ecc4;
+      --bad: #f26464; --bad-bg: #3a1717; --bad-ink: #f6b3b3;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141416; --ink: #f2f2f0; --muted: #9a9a9e; --line: #2e2e32; --card: #1d1d20;
+    --accent: #f2f2f0; --btn-ink: #141416;
+    --good: #3ccf7e; --good-bg: #13301f; --good-ink: #a8ecc4;
+    --bad: #f26464; --bad-bg: #3a1717; --bad-ink: #f6b3b3;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Sukhumvit Set", "Noto Sans Thai", "Leelawadee UI", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh; min-height: 100dvh;
+    padding: 56px 0 32px;
+    overflow-x: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .screen { display: none; width: min(92vw, 900px); text-align: center; }
+  .screen.active { display: block; animation: fade .35s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* Start */
+  .logo { font-size: clamp(64px, 14vmin, 140px); line-height: 1; }
+  h1 { font-size: clamp(36px, 7vmin, 72px); font-weight: 800; letter-spacing: -0.02em; margin-top: 2vmin; }
+  .sub { font-size: clamp(18px, 3vmin, 28px); color: var(--muted); margin-top: 1.5vmin; }
+  .rules { display: flex; gap: 2vmin; justify-content: center; margin: 5vmin 0; flex-wrap: wrap; }
+  .rule { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 2vmin 3vmin; font-size: clamp(15px, 2.3vmin, 22px); }
+  .rule b { display: block; font-size: clamp(24px, 4vmin, 40px); }
+
+  .btn {
+    font: inherit; cursor: pointer; border: none;
+    background: var(--accent); color: var(--btn-ink);
+    font-size: clamp(20px, 3.4vmin, 32px); font-weight: 700;
+    padding: 2.2vmin 7vmin; border-radius: 999px;
+    transition: transform .1s ease, opacity .2s;
+  }
+  .btn:active { transform: scale(.97); }
+
+  /* Question */
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3vmin; }
+  .dots { display: flex; gap: 10px; }
+  .dot { width: clamp(14px, 2vmin, 20px); height: clamp(14px, 2vmin, 20px); border-radius: 50%; background: var(--line); transition: background .3s; }
+  .dot.now { background: var(--ink); }
+  .dot.good { background: var(--good); }
+  .dot.bad { background: var(--bad); }
+  .score { font-size: clamp(18px, 2.8vmin, 26px); font-weight: 700; }
+  .score span { color: var(--muted); font-weight: 500; }
+
+  .emoji { font-size: clamp(72px, 16vmin, 160px); line-height: 1.1; }
+  .prompt { font-size: clamp(24px, 4.6vmin, 46px); font-weight: 700; margin: 2.5vmin 0 4vmin; line-height: 1.35; }
+
+  .options { display: grid; gap: 1.8vmin; }
+  .opt {
+    font: inherit; cursor: pointer; text-align: left;
+    display: flex; align-items: center; gap: 2.5vmin;
+    background: var(--card); color: var(--ink);
+    border: 2px solid var(--line); border-radius: 18px;
+    padding: 2.2vmin 3vmin;
+    font-size: clamp(20px, 3.6vmin, 34px); font-weight: 600;
+    transition: border-color .2s, background .2s, transform .1s;
+  }
+  .opt:hover:not(:disabled) { border-color: var(--ink); }
+  .opt:active:not(:disabled) { transform: scale(.99); }
+  .opt .key {
+    flex: none; width: clamp(36px, 5.5vmin, 54px); height: clamp(36px, 5.5vmin, 54px);
+    border-radius: 12px; background: var(--bg); border: 1px solid var(--line);
+    display: grid; place-items: center; font-size: .8em; font-weight: 700; color: var(--muted);
+  }
+  .opt .mark { margin-left: auto; font-size: 1.1em; }
+  .opt:disabled { cursor: default; }
+  .opt.dim { opacity: .4; }
+  .opt.correct { border-color: var(--good); background: var(--good-bg); }
+  .opt.correct .key { background: var(--good); color: #fff; border-color: var(--good); }
+  .opt.wrong { border-color: var(--bad); background: var(--bad-bg); }
+  .opt.wrong .key { background: var(--bad); color: #fff; border-color: var(--bad); }
+
+  .feedback { min-height: clamp(130px, 22vmin, 220px); margin-top: 3vmin; display: flex; flex-direction: column; align-items: center; gap: 1.6vmin; }
+  .fb-box { display: none; border-radius: 16px; padding: 2vmin 3vmin; font-size: clamp(17px, 2.8vmin, 26px); line-height: 1.45; max-width: 100%; }
+  .fb-box.show { display: block; animation: fade .3s ease; }
+  .fb-box.good { background: var(--good-bg); color: var(--good-ink); }
+  .fb-box.bad { background: var(--bad-bg); color: var(--bad-ink); }
+  .fb-box b { font-weight: 800; }
+  .next { display: none; }
+  .next.show { display: inline-block; animation: fade .3s ease; }
+
+  /* big tick / cross overlay */
+  .stamp {
+    position: fixed; inset: 0; display: grid; place-items: center; pointer-events: none;
+    font-size: clamp(140px, 34vmin, 320px); font-weight: 900; opacity: 0;
+  }
+  .stamp.pop { animation: pop .8s ease forwards; }
+  @keyframes pop {
+    0% { opacity: 0; transform: scale(.4); }
+    30% { opacity: 1; transform: scale(1.1); }
+    55% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1); }
+  }
+
+  /* Result */
+  .big { font-size: clamp(90px, 20vmin, 200px); line-height: 1; }
+  .final { font-size: clamp(56px, 12vmin, 120px); font-weight: 800; margin-top: 2vmin; }
+  .final span { color: var(--muted); font-weight: 500; }
+  .verdict { font-size: clamp(26px, 5vmin, 48px); font-weight: 700; margin: 1.5vmin 0 1vmin; }
+  .verdict.good { color: var(--good); }
+  .note { font-size: clamp(16px, 2.6vmin, 24px); color: var(--muted); margin-bottom: 5vmin; }
+
+  @media (max-width: 600px) {
+    .opt { padding: 14px 16px; gap: 14px; }
+    .rules { gap: 10px; }
+    .rule { padding: 12px 14px; }
+  }
+  .corner { position: fixed; bottom: 14px; right: 18px; font-size: 13px; color: var(--muted); opacity: .6; }
+  .fs { position: fixed; top: 14px; right: 18px; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 10px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<button class="fs" id="fsBtn" title="เต็มจอ (กด F)">⛶ เต็มจอ</button>
+
+<!-- START -->
+<section class="screen active" id="start">
+  <div class="logo">🎬</div>
+  <h1>Guess It!</h1>
+  <p class="sub">Idioms &amp; Slang Challenge</p>
+  <div class="rules">
+    <div class="rule"><b>3</b>คำถาม</div>
+    <div class="rule"><b>A B C</b>เลือก 1 คำตอบ</div>
+    <div class="rule"><b>2/3</b>ได้รับ Stamp</div>
+  </div>
+  <button class="btn" id="startBtn">เริ่มเกม ▶</button>
+</section>
+
+<!-- QUESTION -->
+<section class="screen" id="quiz">
+  <div class="top">
+    <div class="dots" id="dots"></div>
+    <div class="score">⭐ <span id="score">0</span><span> / 3</span></div>
+  </div>
+  <div class="emoji" id="emoji"></div>
+  <div class="prompt" id="prompt"></div>
+  <div class="options" id="options"></div>
+  <div class="feedback">
+    <div class="fb-box" id="fb"></div>
+    <button class="btn next" id="nextBtn">ข้อต่อไป →</button>
+  </div>
+</section>
+
+<!-- RESULT -->
+<section class="screen" id="result">
+  <div class="big" id="resEmoji"></div>
+  <div class="final"><span id="resScore">0</span><span> / 3</span></div>
+  <div class="verdict" id="resText"></div>
+  <div class="note" id="resNote"></div>
+  <button class="btn" id="againBtn">คนถัดไป ↻</button>
+</section>
+
+<div class="stamp" id="stamp"></div>
+<div class="corner" id="setLabel"></div>
+
+<script>
+/* ===== คลังคำถาม: 10 ชุด × 3 ข้อ × 3 ตัวเลือก (ตัวเลือกแรก = คำตอบที่ถูก, ระบบจะสลับตำแหน่งให้เอง) ===== */
+const SETS = [
+  [ // ชุด 1
+    { e: "🍰", q: "“This test is a ___.”", o: ["piece of cake", "break a leg", "spill the tea"], m: "Piece of cake = ง่ายมาก ง่ายเหมือนกินเค้ก" },
+    { e: "🤫☕", q: "“Come on, ___!”", o: ["spill the tea", "chill", "slay"], m: "Spill the tea = เล่าเรื่องเมาท์ / ข่าวเด็ดมาเลย" },
+    { e: "🔥🎤", q: "“That concert was ___!”", o: ["lit", "sus", "salty"], m: "Lit = เจ๋งมาก สนุกสุด ๆ" },
+  ],
+  [ // ชุด 2
+    { e: "🎭", q: "ก่อนเพื่อนขึ้นแสดง ควรพูดว่าอะไร?", o: ["Break a leg!", "Piece of cake!", "No cap!"], m: "Break a leg = ขอให้โชคดีนะ (ใช้อวยพรก่อนขึ้นแสดง)" },
+    { e: "💅✨", q: "“You absolutely ___ that performance!”", o: ["slayed", "chilled", "ghosted"], m: "Slay = ทำได้ปังมาก เริ่ดมาก" },
+    { e: "💔😭", q: "“After that sad ending, I was totally ___.”", o: ["heartbroken", "hyped", "salty"], m: "Heartbroken = อกหัก ใจสลาย" },
+  ],
+  [ // ชุด 3 — หนัง
+    { e: "🍿👍", q: "“Best movie of the year, ___!”", o: ["no cap", "break a leg", "piece of cake"], m: "No cap = ไม่โม้ พูดจริง ๆ" },
+    { e: "🤐🎬", q: "“Don't tell me the ending! No ___!”", o: ["spoilers", "cameos", "sequels"], m: "Spoiler = การเผยเนื้อเรื่อง / ตอนจบก่อนคนอื่นได้ดู" },
+    { e: "😱🔄", q: "“The villain is his father?! What a ___!”", o: ["plot twist", "binge-watch", "cameo"], m: "Plot twist = เนื้อเรื่องหักมุม" },
+  ],
+  [ // ชุด 4
+    { e: "📺🛋️", q: "“I ___ the whole series in one weekend.”", o: ["binge-watched", "ghosted", "roasted"], m: "Binge-watch = ดูซีรีส์รวดเดียวหลาย ๆ ตอน" },
+    { e: "😐🎬", q: "“The movie wasn't bad, but it was just ___.”", o: ["mid", "fire", "iconic"], m: "Mid = ธรรมดา ๆ กลาง ๆ ไม่ได้ว้าว" },
+    { e: "🐐⚽", q: "“Messi is the ___!”", o: ["GOAT", "sus", "cringe"], m: "GOAT = Greatest Of All Time ที่สุดตลอดกาล" },
+  ],
+  [ // ชุด 5 — ชีวิตประจำวัน
+    { e: "👻📱", q: "“He stopped replying. He ___ me!”", o: ["ghosted", "roasted", "slayed"], m: "Ghost = หายเงียบ ไม่ตอบแชทไปเฉย ๆ" },
+    { e: "🤨🔍", q: "“Why is he acting so weird? He's kinda ___.”", o: ["sus", "lit", "chill"], m: "Sus (suspicious) = น่าสงสัย ดูมีพิรุธ" },
+    { e: "😬🙈", q: "“His dance video was so ___.”", o: ["cringe", "GOAT", "iconic"], m: "Cringe = น่าอาย ดูแล้วเขินแทน" },
+  ],
+  [ // ชุด 6
+    { e: "🧂😤", q: "“She lost the game, and now she's ___.”", o: ["salty", "chill", "lit"], m: "Salty = หงุดหงิด งอน ขุ่นเคือง" },
+    { e: "😎🌴", q: "“Relax, just ___!”", o: ["chill", "spill the tea", "ghost"], m: "Chill = ใจเย็น ๆ ชิล ๆ ผ่อนคลาย" },
+    { e: "🔥🎙️", q: "“The comedian ___ him so hard!”", o: ["roasted", "binged", "ghosted"], m: "Roast = แซวแรง ๆ ล้อเลียนแบบขำ ๆ" },
+  ],
+  [ // ชุด 7 — Idioms
+    { e: "🌧️🐱🐶", q: "“It's raining ___!”", o: ["cats and dogs", "piece of cake", "break a leg"], m: "Raining cats and dogs = ฝนตกหนักมาก" },
+    { e: "🧊🔨", q: "“Let's play a game to ___ with new friends.”", o: ["break the ice", "spill the tea", "call it a day"], m: "Break the ice = ละลายพฤติกรรม ทำให้บรรยากาศไม่เกร็ง" },
+    { e: "🌕💙", q: "“I go to the cinema once in a ___.”", o: ["blue moon", "piece of cake", "cold feet"], m: "Once in a blue moon = นาน ๆ ครั้ง" },
+  ],
+  [ // ชุด 8 — Idioms
+    { e: "🥱🛌", q: "“I'm so tired. Let's ___.”", o: ["call it a day", "break a leg", "spill the tea"], m: "Call it a day = พอแค่นี้ก่อน เลิกงานวันนี้" },
+    { e: "💸📱", q: "“This new iPhone costs ___!”", o: ["an arm and a leg", "a piece of cake", "cats and dogs"], m: "Cost an arm and a leg = แพงหูฉี่" },
+    { e: "🥶🦶", q: "“He got ___ right before his first date.”", o: ["cold feet", "lit", "no cap"], m: "Get cold feet = ใจฝ่อ ปอดแหก ไม่กล้าในนาทีสุดท้าย" },
+  ],
+  [ // ชุด 9 — Social Media / เพลง
+    { e: "📈🤳", q: "“Her TikTok went ___ overnight!”", o: ["viral", "salty", "mid"], m: "Go viral = ดังเป็นพลุแตก แชร์กันทั่วโซเชียล" },
+    { e: "👑🎤", q: "“Taylor Swift's stage outfit was so ___!”", o: ["iconic", "sus", "mid"], m: "Iconic = เป็นตำนาน เป็นภาพจำ" },
+    { e: "🤩⏳", q: "“I'm so ___ for the new Marvel movie!”", o: ["hyped", "ghosted", "salty"], m: "Hyped = ตื่นเต้น รอคอยมาก ๆ" },
+  ],
+  [ // ชุด 10
+    { e: "😂💀", q: "“That meme is so funny, I'm ___!”", o: ["dead", "salty", "sus"], m: "I'm dead 💀 = ขำจนจะตายแล้ว" },
+    { e: "🌟🎥", q: "“The director made a quick ___ in his own movie!”", o: ["cameo", "spoiler", "plot twist"], m: "Cameo = การโผล่มาแวบเดียวของคนดัง" },
+    { e: "😵‍💫📲", q: "“Everyone's at the party except me. I have ___!”", o: ["FOMO", "GOAT", "no cap"], m: "FOMO (Fear Of Missing Out) = กลัวตกกระแส กลัวพลาด" },
+  ],
+];
+
+/* ===== สุ่มชุดแบบไม่ซ้ำจนกว่าจะครบทั้ง 10 ชุด (จำข้ามการรีเฟรชหน้า) ===== */
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function nextSetIndex() {
+  let bag = [];
+  try { bag = JSON.parse(localStorage.getItem("guessit_bag") || "[]"); } catch (e) {}
+  if (!bag.length) {
+    let last = Number(localStorage.getItem("guessit_last"));
+    bag = shuffle(SETS.map((_, i) => i));
+    if (bag[0] === last && bag.length > 1) bag.push(bag.shift()); // กันชุดเดิมซ้ำติดกัน
+  }
+  const idx = bag.shift();
+  try { localStorage.setItem("guessit_bag", JSON.stringify(bag)); localStorage.setItem("guessit_last", idx); } catch (e) {}
+  return idx;
+}
+
+/* ===== Game ===== */
+const $ = id => document.getElementById(id);
+let questions = [], qi = 0, score = 0, results = [], answered = false, setNo = 0;
+
+function show(id) { document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.id === id)); }
+
+function startGame() {
+  setNo = nextSetIndex();
+  questions = SETS[setNo];
+  qi = 0; score = 0; results = [];
+  $("setLabel").textContent = "ชุดที่ " + (setNo + 1);
+  show("quiz");
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[qi];
+  answered = false;
+  $("score").textContent = score;
+  $("dots").innerHTML = [0, 1, 2].map(i =>
+    `<div class="dot ${results[i] === true ? "good" : results[i] === false ? "bad" : i === qi ? "now" : ""}"></div>`).join("");
+  $("emoji").textContent = q.e;
+  $("prompt").textContent = q.q;
+  const opts = shuffle(q.o.map((t, i) => ({ t, ok: i === 0 })));
+  $("options").innerHTML = "";
+  opts.forEach((op, i) => {
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.dataset.ok = op.ok;
+    b.innerHTML = `<span class="key">${"ABC"[i]}</span><span>${op.t}</span><span class="mark"></span>`;
+    b.onclick = () => answer(b);
+    $("options").appendChild(b);
+  });
+  $("fb").className = "fb-box";
+  $("nextBtn").className = "btn next";
+  $("nextBtn").textContent = qi < 2 ? "ข้อต่อไป →" : "ดูผลคะแนน →";
+}
+
+function answer(btn) {
+  if (answered) return;
+  answered = true;
+  const q = questions[qi];
+  const ok = btn.dataset.ok === "true";
+  const all = [...$("options").children];
+  const correctBtn = all.find(b => b.dataset.ok === "true");
+  all.forEach(b => { b.disabled = true; if (b !== btn && b !== correctBtn) b.classList.add("dim"); });
+
+  correctBtn.classList.add("correct");
+  correctBtn.querySelector(".mark").textContent = "✅";
+  if (ok) {
+    score++;
+    $("score").textContent = score;
+    popStamp("✓", "var(--good)");
+    $("fb").innerHTML = `ถูกต้อง! 🎉<br><b>${q.m}</b>`;
+    $("fb").className = "fb-box good show";
+  } else {
+    btn.classList.add("wrong");
+    btn.querySelector(".mark").textContent = "❌";
+    popStamp("✗", "var(--bad)");
+    $("fb").innerHTML = `เฉลย: <b>${q.o[0]}</b><br>${q.m}`;
+    $("fb").className = "fb-box bad show";
+  }
+  results[qi] = ok;
+  $("dots").children[qi].className = "dot " + (ok ? "good" : "bad");
+  setTimeout(() => $("nextBtn").classList.add("show"), 450);
+}
+
+function popStamp(ch, color) {
+  const s = $("stamp");
+  s.textContent = ch; s.style.color = color;
+  s.classList.remove("pop"); void s.offsetWidth; s.classList.add("pop");
+}
+
+function next() {
+  if (!answered) return;
+  qi++;
+  if (qi < 3) renderQuestion(); else showResult();
+}
+
+function showResult() {
+  $("resScore").textContent = score;
+  const pass = score >= 2;
+  $("resEmoji").textContent = score === 3 ? "🏆" : pass ? "🎉" : "💪";
+  $("resText").textContent = score === 3 ? "Perfect! เต็ม 3 คะแนน" : pass ? "ผ่าน! เก่งมาก" : "เกือบแล้ว!";
+  $("resText").className = "verdict" + (pass ? " good" : "");
+  $("resNote").textContent = pass ? "รับ Stamp ได้ที่เจ้าหน้าที่เลย ✨" : "ลองใหม่อีกครั้งนะ ได้โจทย์ชุดใหม่แน่นอน";
+  show("result");
+}
+
+/* ===== Controls ===== */
+$("startBtn").onclick = startGame;
+$("nextBtn").onclick = next;
+$("againBtn").onclick = () => { show("start"); $("setLabel").textContent = ""; };
+
+function toggleFS() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+  else document.exitFullscreen?.();
+}
+$("fsBtn").onclick = toggleFS;
+if (!document.documentElement.requestFullscreen) $("fsBtn").style.display = "none"; // iPhone ไม่รองรับ
+
+document.addEventListener("keydown", e => {
+  const k = e.key.toLowerCase();
+  if (k === "f") return toggleFS();
+  const active = document.querySelector(".screen.active").id;
+  if (active === "start" && (k === "enter" || k === " ")) return startGame();
+  if (active === "result" && (k === "enter" || k === " ")) return $("againBtn").click();
+  if (active === "quiz") {
+    const map = { a: 0, b: 1, c: 2, "1": 0, "2": 1, "3": 2 };
+    if (k in map && !answered) $("options").children[map[k]].click();
+    else if ((k === "enter" || k === " " || k === "arrowright") && answered) next();
+  }
+});
+</script>
+</body>
+</html>
