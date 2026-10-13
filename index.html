@@ -7,6 +7,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#fafaf7">
 <title>Guess It! Slang Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #fafaf7;
@@ -146,6 +149,15 @@
     .rules { gap: 10px; }
     .rule { padding: 12px 14px; }
   }
+  .btn-next {
+    font-family: "Poppins", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    padding-left: calc(8vmin + 0.22em);
+    padding-right: 8vmin;
+  }
+  .btn-next .arrow { display: inline-block; margin-left: .35em; letter-spacing: 0; transition: transform .2s; }
+  .btn-next:hover .arrow { transform: translateX(4px); }
   .corner { position: fixed; bottom: 14px; right: 18px; font-size: 13px; color: var(--muted); opacity: .6; }
   .fs { position: fixed; top: 14px; right: 18px; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 10px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
 </style>
@@ -160,9 +172,9 @@
   <h1>Guess It!</h1>
   <p class="sub">Idioms &amp; Slang Challenge</p>
   <div class="rules">
-    <div class="rule"><b>3</b>คำถาม</div>
+    <div class="rule"><b>5</b>คำถาม</div>
     <div class="rule"><b>A B C</b>เลือก 1 คำตอบ</div>
-    <div class="rule"><b>2/3</b>ได้รับ Stamp</div>
+    <div class="rule"><b>3/5</b>ได้รับ Stamp</div>
   </div>
   <button class="btn" id="startBtn">เริ่มเกม ▶</button>
 </section>
@@ -171,7 +183,7 @@
 <section class="screen" id="quiz">
   <div class="top">
     <div class="dots" id="dots"></div>
-    <div class="score">⭐ <span id="score">0</span><span> / 3</span></div>
+    <div class="score">⭐ <span id="score">0</span><span> / 5</span></div>
   </div>
   <div class="emoji" id="emoji"></div>
   <div class="prompt" id="prompt"></div>
@@ -185,86 +197,142 @@
 <!-- RESULT -->
 <section class="screen" id="result">
   <div class="big" id="resEmoji"></div>
-  <div class="final"><span id="resScore">0</span><span> / 3</span></div>
+  <div class="final"><span id="resScore">0</span><span> / 5</span></div>
   <div class="verdict" id="resText"></div>
   <div class="note" id="resNote"></div>
-  <button class="btn" id="againBtn">คนถัดไป ↻</button>
+  <button class="btn btn-next" id="againBtn">NEXT<span class="arrow">→</span></button>
 </section>
 
 <div class="stamp" id="stamp"></div>
 <div class="corner" id="setLabel"></div>
 
 <script>
-/* ===== คลังคำถาม: 10 ชุด × 3 ข้อ × 3 ตัวเลือก (ตัวเลือกแรก = คำตอบที่ถูก, ระบบจะสลับตำแหน่งให้เอง) ===== */
+/* ===== คลังคำถาม: 15 ชุด × 5 ข้อ × 3 ตัวเลือก (ตัวเลือกแรก = คำตอบที่ถูก, ระบบจะสลับตำแหน่งให้เอง) ===== */
 const SETS = [
   [ // ชุด 1
     { e: "🍰", q: "“This test is a ___.”", o: ["piece of cake", "break a leg", "spill the tea"], m: "Piece of cake = ง่ายมาก ง่ายเหมือนกินเค้ก" },
     { e: "🤫☕", q: "“Come on, ___!”", o: ["spill the tea", "chill", "slay"], m: "Spill the tea = เล่าเรื่องเมาท์ / ข่าวเด็ดมาเลย" },
     { e: "🔥🎤", q: "“That concert was ___!”", o: ["lit", "sus", "salty"], m: "Lit = เจ๋งมาก สนุกสุด ๆ" },
+    { e: "🎯🔨", q: "“You ___! That's exactly right.”", o: ["hit the nail on the head", "spilled the tea", "got cold feet"], m: "Hit the nail on the head = พูดถูกเป๊ะ ตรงประเด็น" },
+    { e: "🤞🍀", q: "“Good luck on your exam! Fingers ___!”", o: ["crossed", "up", "down"], m: "Fingers crossed = ขอให้โชคดีนะ / ภาวนาให้สำเร็จ" },
   ],
   [ // ชุด 2
     { e: "🎭", q: "ก่อนเพื่อนขึ้นแสดง ควรพูดว่าอะไร?", o: ["Break a leg!", "Piece of cake!", "No cap!"], m: "Break a leg = ขอให้โชคดีนะ (ใช้อวยพรก่อนขึ้นแสดง)" },
     { e: "💅✨", q: "“You absolutely ___ that performance!”", o: ["slayed", "chilled", "ghosted"], m: "Slay = ทำได้ปังมาก เริ่ดมาก" },
     { e: "💔😭", q: "“After that sad ending, I was totally ___.”", o: ["heartbroken", "hyped", "salty"], m: "Heartbroken = อกหัก ใจสลาย" },
+    { e: "🎶💥", q: "“This new song is a total ___!”", o: ["banger", "cringe", "ghost"], m: "Banger = เพลงปังมาก ฟังแล้วโยกตาม" },
+    { e: "🎧🔁", q: "“I've had this song on ___ all day.”", o: ["repeat", "chill", "fire"], m: "On repeat = เปิดวนฟังซ้ำไม่หยุด" },
   ],
   [ // ชุด 3 — หนัง
     { e: "🍿👍", q: "“Best movie of the year, ___!”", o: ["no cap", "break a leg", "piece of cake"], m: "No cap = ไม่โม้ พูดจริง ๆ" },
     { e: "🤐🎬", q: "“Don't tell me the ending! No ___!”", o: ["spoilers", "cameos", "sequels"], m: "Spoiler = การเผยเนื้อเรื่อง / ตอนจบก่อนคนอื่นได้ดู" },
     { e: "😱🔄", q: "“The villain is his father?! What a ___!”", o: ["plot twist", "binge-watch", "cameo"], m: "Plot twist = เนื้อเรื่องหักมุม" },
+    { e: "🌧️🎧🚶", q: "“Walking in the rain with music, I feel like the ___!”", o: ["main character", "villain", "audience"], m: "Main character (energy) = ฟีลเหมือนเป็นพระเอก/นางเอกในหนัง" },
+    { e: "🎢😭😂", q: "“That movie was an emotional ___!”", o: ["rollercoaster", "piece of cake", "red flag"], m: "Emotional rollercoaster = อารมณ์ขึ้นลงสุด ๆ ทั้งหัวเราะทั้งร้องไห้" },
   ],
   [ // ชุด 4
     { e: "📺🛋️", q: "“I ___ the whole series in one weekend.”", o: ["binge-watched", "ghosted", "roasted"], m: "Binge-watch = ดูซีรีส์รวดเดียวหลาย ๆ ตอน" },
     { e: "😐🎬", q: "“The movie wasn't bad, but it was just ___.”", o: ["mid", "fire", "iconic"], m: "Mid = ธรรมดา ๆ กลาง ๆ ไม่ได้ว้าว" },
     { e: "🐐⚽", q: "“Messi is the ___!”", o: ["GOAT", "sus", "cringe"], m: "GOAT = Greatest Of All Time ที่สุดตลอดกาล" },
+    { e: "🥔📺", q: "“My brother watches TV all day. He's a ___.”", o: ["couch potato", "GOAT", "main character"], m: "Couch potato = คนขี้เกียจที่นอนดูทีวีทั้งวัน" },
+    { e: "🌶️💬", q: "“My ___: pineapple belongs on pizza!”", o: ["hot take", "cold feet", "plot twist"], m: "Hot take = ความเห็นแรง ๆ ที่หลายคนอาจไม่เห็นด้วย" },
   ],
   [ // ชุด 5 — ชีวิตประจำวัน
     { e: "👻📱", q: "“He stopped replying. He ___ me!”", o: ["ghosted", "roasted", "slayed"], m: "Ghost = หายเงียบ ไม่ตอบแชทไปเฉย ๆ" },
     { e: "🤨🔍", q: "“Why is he acting so weird? He's kinda ___.”", o: ["sus", "lit", "chill"], m: "Sus (suspicious) = น่าสงสัย ดูมีพิรุธ" },
     { e: "😬🙈", q: "“His dance video was so ___.”", o: ["cringe", "GOAT", "iconic"], m: "Cringe = น่าอาย ดูแล้วเขินแทน" },
+    { e: "🚩😠", q: "“He never says sorry. That's a ___.”", o: ["red flag", "green light", "piece of cake"], m: "Red flag = สัญญาณอันตราย นิสัยที่ควรระวัง" },
+    { e: "😏💘", q: "“He got her number in five minutes. He has so much ___!”", o: ["rizz", "tea", "FOMO"], m: "Rizz = เสน่ห์ ความสามารถในการจีบ" },
   ],
   [ // ชุด 6
     { e: "🧂😤", q: "“She lost the game, and now she's ___.”", o: ["salty", "chill", "lit"], m: "Salty = หงุดหงิด งอน ขุ่นเคือง" },
     { e: "😎🌴", q: "“Relax, just ___!”", o: ["chill", "spill the tea", "ghost"], m: "Chill = ใจเย็น ๆ ชิล ๆ ผ่อนคลาย" },
     { e: "🔥🎙️", q: "“The comedian ___ him so hard!”", o: ["roasted", "binged", "ghosted"], m: "Roast = แซวแรง ๆ ล้อเลียนแบบขำ ๆ" },
+    { e: "🎭🙄", q: "“Wearing a ball gown to the cinema? You're so ___!”", o: ["extra", "mid", "sus"], m: "Extra = เว่อร์ เกินเบอร์ ทำเกินจำเป็น" },
+    { e: "🧢🤥", q: "“He said he had dinner with BTS? That's ___!”", o: ["cap", "lit", "iconic"], m: "Cap = โม้ โกหก (ตรงข้ามกับ no cap)" },
   ],
   [ // ชุด 7 — Idioms
     { e: "🌧️🐱🐶", q: "“It's raining ___!”", o: ["cats and dogs", "piece of cake", "break a leg"], m: "Raining cats and dogs = ฝนตกหนักมาก" },
     { e: "🧊🔨", q: "“Let's play a game to ___ with new friends.”", o: ["break the ice", "spill the tea", "call it a day"], m: "Break the ice = ละลายพฤติกรรม ทำให้บรรยากาศไม่เกร็ง" },
     { e: "🌕💙", q: "“I go to the cinema once in a ___.”", o: ["blue moon", "piece of cake", "cold feet"], m: "Once in a blue moon = นาน ๆ ครั้ง" },
+    { e: "🐦🐦🪨", q: "“I study English by watching movies — I ___!”", o: ["kill two birds with one stone", "break a leg", "call it a day"], m: "Kill two birds with one stone = ยิงปืนนัดเดียวได้นกสองตัว" },
+    { e: "🤒🌦️", q: "“I can't come today. I'm feeling under the ___.”", o: ["weather", "sea", "moon"], m: "Under the weather = รู้สึกไม่ค่อยสบาย" },
   ],
   [ // ชุด 8 — Idioms
     { e: "🥱🛌", q: "“I'm so tired. Let's ___.”", o: ["call it a day", "break a leg", "spill the tea"], m: "Call it a day = พอแค่นี้ก่อน เลิกงานวันนี้" },
     { e: "💸📱", q: "“This new iPhone costs ___!”", o: ["an arm and a leg", "a piece of cake", "cats and dogs"], m: "Cost an arm and a leg = แพงหูฉี่" },
     { e: "🥶🦶", q: "“He got ___ right before his first date.”", o: ["cold feet", "lit", "no cap"], m: "Get cold feet = ใจฝ่อ ปอดแหก ไม่กล้าในนาทีสุดท้าย" },
+    { e: "📝✈️", q: "“Seeing the Northern Lights is on my ___.”", o: ["bucket list", "red flag", "hot take"], m: "Bucket list = รายการสิ่งที่อยากทำให้ได้สักครั้งในชีวิต" },
+    { e: "🏀🔥", q: "“He scored ten points in a row. He's ___!”", o: ["on fire", "salty", "under the weather"], m: "On fire = ฟอร์มแรงมาก ทำอะไรก็สำเร็จ" },
   ],
   [ // ชุด 9 — Social Media / เพลง
     { e: "📈🤳", q: "“Her TikTok went ___ overnight!”", o: ["viral", "salty", "mid"], m: "Go viral = ดังเป็นพลุแตก แชร์กันทั่วโซเชียล" },
     { e: "👑🎤", q: "“Taylor Swift's stage outfit was so ___!”", o: ["iconic", "sus", "mid"], m: "Iconic = เป็นตำนาน เป็นภาพจำ" },
     { e: "🤩⏳", q: "“I'm so ___ for the new Marvel movie!”", o: ["hyped", "ghosted", "salty"], m: "Hyped = ตื่นเต้น รอคอยมาก ๆ" },
+    { e: "📱🌳", q: "“You've been scrolling all day. Go ___!”", o: ["touch grass", "spill the tea", "break a leg"], m: "Touch grass = ออกไปใช้ชีวิตข้างนอกบ้าง พักจากโลกออนไลน์" },
+    { e: "✨☕🎶", q: "“This café has such a good ___.”", o: ["vibe", "cap", "plot twist"], m: "Vibe = บรรยากาศ ฟีล ความรู้สึก" },
   ],
   [ // ชุด 10
     { e: "😂💀", q: "“That meme is so funny, I'm ___!”", o: ["dead", "salty", "sus"], m: "I'm dead 💀 = ขำจนจะตายแล้ว" },
     { e: "🌟🎥", q: "“The director made a quick ___ in his own movie!”", o: ["cameo", "spoiler", "plot twist"], m: "Cameo = การโผล่มาแวบเดียวของคนดัง" },
     { e: "😵‍💫📲", q: "“Everyone's at the party except me. I have ___!”", o: ["FOMO", "GOAT", "no cap"], m: "FOMO (Fear Of Missing Out) = กลัวตกกระแส กลัวพลาด" },
+    { e: "👯‍♀️💛", q: "“She's my ___! We do everything together.”", o: ["bestie", "villain", "cameo"], m: "Bestie = เพื่อนซี้ เพื่อนสนิทที่สุด" },
+    { e: "🤫😊", q: "“I ___ love this cheesy movie.”", o: ["low-key", "extra", "salty"], m: "Low-key = แอบ ๆ นิด ๆ (ไม่ได้ประกาศให้ใครรู้)" },
+  ],
+  [ // ชุด 11 — หนัง / ซีรีส์
+    { e: "🎟️💰", q: "“Avengers made billions. It was a real ___!”", o: ["blockbuster", "couch potato", "bucket list"], m: "Blockbuster = หนังฟอร์มยักษ์ ทำเงินถล่มทลาย" },
+    { e: "🍅👎", q: "“Nobody watched that movie. It was a total ___.”", o: ["flop", "banger", "GOAT"], m: "Flop = เจ๊ง ล้มเหลว ไม่มีใครดู" },
+    { e: "😱⏸️", q: "“The episode ended at the best part! What a ___!”", o: ["cliffhanger", "cameo", "hot take"], m: "Cliffhanger = จบค้างให้ลุ้นตอนต่อไป" },
+    { e: "👻😨", q: "“I screamed at the ___ in that horror movie!”", o: ["jump scare", "bucket list", "red flag"], m: "Jump scare = ฉากตุ้งแช่ ทำให้สะดุ้งตกใจ" },
+    { e: "🎬2️⃣", q: "“The first movie was great. I can't wait for the ___!”", o: ["sequel", "spoiler", "flop"], m: "Sequel = ภาคต่อ" },
+  ],
+  [ // ชุด 12 — Idioms ชีวิตประจำวัน
+    { e: "🐝📚", q: "“Exams and work every day — I'm as busy as a ___!”", o: ["bee", "cat", "fish"], m: "Busy as a bee = ยุ่งมาก งานล้นมือ" },
+    { e: "🍎👁️", q: "“My little sister is the ___ of my eye.”", o: ["apple", "banana", "cake"], m: "Apple of my eye = คนที่รักที่สุด แก้วตาดวงใจ" },
+    { e: "🔔🤔", q: "“Her name ___. Have we met before?”", o: ["rings a bell", "breaks the ice", "spills the tea"], m: "Ring a bell = ฟังแล้วคุ้น ๆ" },
+    { e: "🐈👜", q: "“Oops! I ___ about the surprise party.”", o: ["let the cat out of the bag", "broke a leg", "called it a day"], m: "Let the cat out of the bag = เผลอหลุดปากบอกความลับ" },
+    { e: "🛶🌊", q: "“We both forgot our homework. We're in the same ___.”", o: ["boat", "car", "house"], m: "In the same boat = หัวอกเดียวกัน เจอปัญหาเดียวกัน" },
+  ],
+  [ // ชุด 13 — Social Media
+    { e: "🎶👏", q: "“This song really ___!”", o: ["slaps", "ghosts", "roasts"], m: "Slaps = (เพลง) ดีมาก ปังมาก" },
+    { e: "🐶📸", q: "“My dog ___ our group selfie!”", o: ["photobombed", "ghosted", "binge-watched"], m: "Photobomb = โผล่เข้ามาในรูปคนอื่นแบบไม่ได้รับเชิญ" },
+    { e: "🤯🎩", q: "“That magic trick left me ___!”", o: ["mind-blown", "salty", "low-key"], m: "Mind-blown = ทึ่งมาก อึ้งไปเลย" },
+    { e: "📱🌙", q: "“I spent all night ___ on my phone.”", o: ["doomscrolling", "slaying", "roasting"], m: "Doomscrolling = ไถฟีดไปเรื่อย ๆ ไม่หยุด" },
+    { e: "👴🕺", q: "“Grandpa learning TikTok dances is so ___!”", o: ["wholesome", "sus", "mid"], m: "Wholesome = น่ารัก อบอุ่นหัวใจ" },
+  ],
+  [ // ชุด 14 — เพลง / คอนเสิร์ต
+    { e: "👏🔁", q: "“The crowd shouted ‘One more song!’ for an ___.”", o: ["encore", "intro", "cameo"], m: "Encore = การเรียกร้องให้ศิลปินร้องเพิ่มหลังจบโชว์" },
+    { e: "🎵🧠", q: "“This song is stuck in my head. It's an ___!”", o: ["earworm", "icebreaker", "underdog"], m: "Earworm = เพลงติดหู" },
+    { e: "💗🎤", q: "“I'm a huge BLACKPINK ___. I know every song!”", o: ["stan", "ghost", "cap"], m: "Stan = แฟนตัวยง ติ่งตัวแม่" },
+    { e: "🎫❌", q: "“We couldn't get tickets. The concert was ___.”", o: ["sold out", "chill", "low-key"], m: "Sold out = บัตรขายหมดเกลี้ยง" },
+    { e: "💃✨", q: "“Her dance ___. Everyone was talking about it!”", o: ["stole the show", "called it a day", "got cold feet"], m: "Steal the show = โดดเด่นที่สุด แย่งซีนทุกคน" },
+  ],
+  [ // ชุด 15 — Slang ชีวิตประจำวัน
+    { e: "🐶🏆", q: "“Nobody thought the small team would win. They were the ___!”", o: ["underdog", "couch potato", "main character"], m: "Underdog = ม้านอกสายตา ฝ่ายที่ไม่มีใครคิดว่าจะชนะ" },
+    { e: "🦋✨", q: "“She looks so different from high school. What a ___!”", o: ["glow-up", "flop", "cliffhanger"], m: "Glow-up = เปลี่ยนลุคแล้วดูดีขึ้นมาก" },
+    { e: "🍕😤", q: "“I haven't eaten all day. I'm so ___!”", o: ["hangry", "hyped", "heartbroken"], m: "Hangry (hungry + angry) = หิวจนหงุดหงิด" },
+    { e: "🔒🍜", q: "“Tell me where you found this noodle shop! Don't ___!”", o: ["gatekeep", "photobomb", "doomscroll"], m: "Gatekeep = หวงของดี ไม่ยอมบอกคนอื่น" },
+    { e: "😴🛏️", q: "“I'm exhausted. Time to hit the ___.”", o: ["sack", "road", "bell"], m: "Hit the sack = ไปนอน" },
   ],
 ];
 
-/* ===== สุ่มชุดแบบไม่ซ้ำจนกว่าจะครบทั้ง 10 ชุด (จำข้ามการรีเฟรชหน้า) ===== */
+/* ===== สุ่มชุดแบบไม่ซ้ำจนกว่าจะครบทุกชุด (จำข้ามการรีเฟรชหน้า) ===== */
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function nextSetIndex() {
   let bag = [];
-  try { bag = JSON.parse(localStorage.getItem("guessit_bag") || "[]"); } catch (e) {}
+  try { bag = JSON.parse(localStorage.getItem("guessit_bag_v15") || "[]"); } catch (e) {}
   if (!bag.length) {
-    let last = Number(localStorage.getItem("guessit_last"));
+    let last = Number(localStorage.getItem("guessit_last_v15"));
     bag = shuffle(SETS.map((_, i) => i));
     if (bag[0] === last && bag.length > 1) bag.push(bag.shift()); // กันชุดเดิมซ้ำติดกัน
   }
   const idx = bag.shift();
-  try { localStorage.setItem("guessit_bag", JSON.stringify(bag)); localStorage.setItem("guessit_last", idx); } catch (e) {}
+  try { localStorage.setItem("guessit_bag_v15", JSON.stringify(bag)); localStorage.setItem("guessit_last_v15", idx); } catch (e) {}
   return idx;
 }
 
 /* ===== Game ===== */
+const PASS_SCORE = 3; // ตอบถูกกี่ข้อถึงได้ Stamp
 const $ = id => document.getElementById(id);
 let questions = [], qi = 0, score = 0, results = [], answered = false, setNo = 0;
 
@@ -283,7 +351,7 @@ function renderQuestion() {
   const q = questions[qi];
   answered = false;
   $("score").textContent = score;
-  $("dots").innerHTML = [0, 1, 2].map(i =>
+  $("dots").innerHTML = questions.map((_, i) =>
     `<div class="dot ${results[i] === true ? "good" : results[i] === false ? "bad" : i === qi ? "now" : ""}"></div>`).join("");
   $("emoji").textContent = q.e;
   $("prompt").textContent = q.q;
@@ -299,7 +367,7 @@ function renderQuestion() {
   });
   $("fb").className = "fb-box";
   $("nextBtn").className = "btn next";
-  $("nextBtn").textContent = qi < 2 ? "ข้อต่อไป →" : "ดูผลคะแนน →";
+  $("nextBtn").textContent = qi < questions.length - 1 ? "ข้อต่อไป →" : "ดูผลคะแนน →";
 }
 
 function answer(btn) {
@@ -340,14 +408,14 @@ function popStamp(ch, color) {
 function next() {
   if (!answered) return;
   qi++;
-  if (qi < 3) renderQuestion(); else showResult();
+  if (qi < questions.length) renderQuestion(); else showResult();
 }
 
 function showResult() {
   $("resScore").textContent = score;
-  const pass = score >= 2;
-  $("resEmoji").textContent = score === 3 ? "🏆" : pass ? "🎉" : "💪";
-  $("resText").textContent = score === 3 ? "Perfect! เต็ม 3 คะแนน" : pass ? "ผ่าน! เก่งมาก" : "เกือบแล้ว!";
+  const pass = score >= PASS_SCORE;
+  $("resEmoji").textContent = score === questions.length ? "🏆" : pass ? "🎉" : "💪";
+  $("resText").textContent = score === questions.length ? "Perfect! เต็ม " + questions.length + " คะแนน" : pass ? "ผ่าน! เก่งมาก" : "เกือบแล้ว!";
   $("resText").className = "verdict" + (pass ? " good" : "");
   $("resNote").textContent = pass ? "รับ Stamp ได้ที่เจ้าหน้าที่เลย ✨" : "ลองใหม่อีกครั้งนะ ได้โจทย์ชุดใหม่แน่นอน";
   show("result");
